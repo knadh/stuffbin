@@ -249,8 +249,10 @@ func cleanPath(rootPath, p string) string {
 }
 
 // ParseTemplatesGlob takes a file system, a file path pattern,
-// and parses matching files into a template.Template.
-func ParseTemplatesGlob(fs FileSystem, pattern string) (*template.Template, error) {
+// and parses matching files into a template.Template with an
+// optional template.FuncMap that will be applied to the compiled
+// templates.
+func ParseTemplatesGlob(f template.FuncMap, fs FileSystem, pattern string) (*template.Template, error) {
 	paths, err := fs.Glob(pattern)
 	if err != nil {
 		return nil, err
@@ -259,13 +261,16 @@ func ParseTemplatesGlob(fs FileSystem, pattern string) (*template.Template, erro
 		return nil, fmt.Errorf("pattern %s matches no files", pattern)
 	}
 
-	return ParseTemplates(fs, paths...)
+	return ParseTemplates(f, fs, paths...)
 }
 
 // ParseTemplates takes a file system, a list of file paths,
 // and parses them into a template.Template.
-func ParseTemplates(fs FileSystem, path ...string) (*template.Template, error) {
+func ParseTemplates(f template.FuncMap, fs FileSystem, path ...string) (*template.Template, error) {
 	tpl := template.New(filepath.Base(path[0]))
+	if f != nil {
+		tpl = tpl.Funcs(f)
+	}
 	for _, p := range path {
 		f, err := fs.Read(p)
 		if err != nil {
