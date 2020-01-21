@@ -63,8 +63,13 @@ import (
 )
 
 func main() {
+	// Get self executable path.
+	path, err := os.Executable()
+	if err != nil {
+		log.Fatalf("error getting executable path: %v", err)
+	}
 	// Read stuffed data from self.
-	fs, err := stuffbin.UnStuff(os.Args[0])
+	fs, err := stuffbin.UnStuff(path)
 	if err != nil {
 		// Binary is unstuffed or is running in dev mode.
 		// Can halt here or fall back to the local filesystem.
