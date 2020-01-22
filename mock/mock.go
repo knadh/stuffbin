@@ -54,5 +54,5 @@ func main() {
 	// Try http://localhost:8000/static/subdir/baz.txt
 	http.Handle("/static/", http.StripPrefix("/static/", fs.FileServer()))
 	log.Println("listening on :8000")
-	http.ListenAndServe(":8000", nil)
+	_ = http.ListenAndServe(":8000", nil)
 }

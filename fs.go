@@ -271,6 +271,11 @@ func ParseTemplates(f template.FuncMap, fs FileSystem, path ...string) (*templat
 	if f != nil {
 		tpl = tpl.Funcs(f)
 	}
+
+	if len(path) == 0 {
+		return nil, fmt.Errorf("no files named in call to ParseTemplates")
+	}
+
 	for _, p := range path {
 		f, err := fs.Read(p)
 		if err != nil {

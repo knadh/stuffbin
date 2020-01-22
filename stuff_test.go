@@ -13,7 +13,7 @@ const mockBin = "mock/mock.exe"
 const mockBinStuffed = "mock/mock.exe.stuffed"
 const mockBinStuffed2 = "mock/mock.exe.stuffed.temp"
 const mockExeSize = 512
-const mockZipSize = 312
+const mockZipSize = 338
 
 var mockID = ID{
 	Name:    [8]byte{'s', 't', 'u', 'f', 'f', 'b', 'i', 'n'},
@@ -37,7 +37,7 @@ func TestMakeIDBytes(t *testing.T) {
 	b := makeIDBytes(mockID)
 
 	assert(t, "makeID returned unexpected bytes",
-		[]byte{115, 116, 117, 102, 102, 98, 105, 110, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 56},
+		[]byte{115, 116, 117, 102, 102, 98, 105, 110, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 82},
 		b)
 }
 
@@ -46,7 +46,7 @@ func TestStuff(t *testing.T) {
 	assert(t, "error stuffing", nil, err)
 	assert(t, "exe size", mockExeSize, exeSize)
 	assert(t, "zip size", mockZipSize, zipSize)
-	os.Remove(mockBinStuffed2)
+	_ = os.Remove(mockBinStuffed2)
 }
 
 func TestStuffCustomRoot(t *testing.T) {
@@ -60,7 +60,7 @@ func TestStuffCustomRoot(t *testing.T) {
 	f2 := fs.List()
 	sort.Strings(f2)
 	assert(t, "mismatch in stuffed file paths with custom /root/", f, f2)
-	os.Remove(mockBinStuffed2)
+	_ = os.Remove(mockBinStuffed2)
 }
 
 func TestGetFileID(t *testing.T) {
@@ -91,7 +91,7 @@ func TestZipFiles(t *testing.T) {
 func setup() {
 	// Generate a fake EXE file with random bytes.
 	b := make([]byte, mockExeSize)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	err := ioutil.WriteFile(mockBin, b, 0755)
 	if err != nil {
 		panic(err)
@@ -103,9 +103,9 @@ func setup() {
 }
 
 func teardown() {
-	os.Remove(mockBin)
-	os.Remove(mockBinStuffed)
-	os.Remove(mockBinStuffed2)
+	_ = os.Remove(mockBin)
+	_ = os.Remove(mockBinStuffed)
+	_ = os.Remove(mockBinStuffed2)
 }
 
 func assert(t *testing.T, msg string, a interface{}, b interface{}) {
