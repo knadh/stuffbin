@@ -80,10 +80,12 @@ func TestGlob(t *testing.T) {
 		return
 	}
 
-	g, _ := fs.Glob("/foo.txt")
+	g, err := fs.Glob("/foo.txt")
+	assert(t, "glob creation failed", nil, err)
 	assert(t, "glob match failed", []string{"/foo.txt"}, g)
 
-	g, _ = fs.Glob("/mock/*.exe")
+	g, err = fs.Glob("/mock/*.exe")
+	assert(t, "glob creation failed", nil, err)
 	assert(t, "glob match failed", []string{"/mock/mock.exe"}, g)
 }
 
@@ -98,8 +100,9 @@ func TestParseTemplates(t *testing.T) {
 	assert(t, "error parsing template", nil, err)
 
 	b := bytes.Buffer{}
-	tpl.Execute(&b, nil)
-	assert(t, "mismatch in executed template", "foo", string(b.Bytes()))
+	err = tpl.Execute(&b, nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "foo", b.String())
 
 	// Template func map.
 	mp := map[string]interface{}{
@@ -110,8 +113,9 @@ func TestParseTemplates(t *testing.T) {
 	tpl, err = ParseTemplates(mp, fs, "/foofunc.txt")
 	assert(t, "error parsing template", nil, err)
 	b.Reset()
-	tpl.Execute(&b, nil)
-	assert(t, "mismatch in executed template", "foo - func", string(b.Bytes()))
+	err = tpl.Execute(&b, nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "foo - func", b.String())
 }
 
 func TestParseTemplatesGlob(t *testing.T) {
@@ -132,6 +136,7 @@ func TestParseTemplatesGlob(t *testing.T) {
 	assert(t, "error parsing template", nil, err)
 
 	b := bytes.Buffer{}
-	tpl.Execute(&b, nil)
-	assert(t, "mismatch in executed template", "foo - func", string(b.Bytes()))
+	err = tpl.Execute(&b, nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "foo\nfoo - func\n", b.String())
 }
