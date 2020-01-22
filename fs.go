@@ -206,8 +206,8 @@ func (f *File) ReadBytes() []byte {
 // Close emulates http.File's Close but internally,
 // it simply seeks the File's reader to 0.
 func (f *File) Close() error {
-	f.Seek(0, 0)
-	return nil
+	_, err := f.Seek(0, 0)
+	return err
 }
 
 // Read reads the file contents.
