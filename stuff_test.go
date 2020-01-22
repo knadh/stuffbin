@@ -13,7 +13,7 @@ const mockBin = "mock/mock.exe"
 const mockBinStuffed = "mock/mock.exe.stuffed"
 const mockBinStuffed2 = "mock/mock.exe.stuffed.temp"
 const mockExeSize = 512
-const mockZipSize = 312
+const mockZipSize = 338
 
 var mockID = ID{
 	Name:    [8]byte{'s', 't', 'u', 'f', 'f', 'b', 'i', 'n'},
@@ -37,7 +37,7 @@ func TestMakeIDBytes(t *testing.T) {
 	b := makeIDBytes(mockID)
 
 	assert(t, "makeID returned unexpected bytes",
-		[]byte{115, 116, 117, 102, 102, 98, 105, 110, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 56},
+		[]byte{115, 116, 117, 102, 102, 98, 105, 110, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 82},
 		b)
 }
 

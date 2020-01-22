@@ -90,19 +90,19 @@ func TestGlob(t *testing.T) {
 }
 
 func TestParseTemplates(t *testing.T) {
-	fs, err := NewLocalFS("/", "mock/", "mock/foo.txt:/foo.txt", "mock/foofunc.txt:/foofunc.txt")
+	fs, err := NewLocalFS("/", "mock/", "mock/bar.txt:/bar.txt", "mock/foo.txt:/foo.txt", "mock/foofunc.txt:/foofunc.txt")
 	assert(t, "error creating local FS", nil, err)
 	if fs == nil {
 		return
 	}
 
-	tpl, err := ParseTemplates(nil, fs, "/foo.txt")
+	tpl, err := ParseTemplates(nil, fs, "/bar.txt")
 	assert(t, "error parsing template", nil, err)
 
 	b := bytes.Buffer{}
 	err = tpl.Execute(&b, nil)
 	assert(t, "template execute failed", nil, err)
-	assert(t, "mismatch in executed template", "foo", b.String())
+	assert(t, "mismatch in executed template", "bar", b.String())
 
 	// Template func map.
 	mp := map[string]interface{}{
@@ -110,12 +110,12 @@ func TestParseTemplates(t *testing.T) {
 			return "func"
 		},
 	}
-	tpl, err = ParseTemplates(mp, fs, "/foofunc.txt")
+	tpl, err = ParseTemplates(mp, fs, "/foo.txt", "/foofunc.txt")
 	assert(t, "error parsing template", nil, err)
 	b.Reset()
 	err = tpl.Execute(&b, nil)
 	assert(t, "template execute failed", nil, err)
-	assert(t, "mismatch in executed template", "foo - func", b.String())
+	assert(t, "mismatch in executed template", "foo\nfoo - func\n", b.String())
 }
 
 func TestParseTemplatesGlob(t *testing.T) {
