@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -43,6 +45,10 @@ func TestMakeIDBytes(t *testing.T) {
 
 func TestStuff(t *testing.T) {
 	exeSize, zipSize, err := Stuff(mockBin, mockBinStuffed2, "/", localFiles...)
+	if runtime.GOOS == "windows" {
+		// reduce length by one to compensate for \r line ending byte on windows
+		zipSize--
+	}
 	assert(t, "error stuffing", nil, err)
 	assert(t, "exe size", mockExeSize, exeSize)
 	assert(t, "zip size", mockZipSize, zipSize)
@@ -66,6 +72,10 @@ func TestStuffCustomRoot(t *testing.T) {
 func TestGetFileID(t *testing.T) {
 	id, err := GetFileID(mockBinStuffed)
 	assert(t, "error getting file ID", nil, err)
+	if runtime.GOOS == "windows" {
+		// reduce length by one to compensate for \r line ending byte on windows
+		id.ZipSize--
+	}
 	assert(t, "error matching file ID", mockID, id)
 }
 
@@ -109,7 +119,8 @@ func teardown() {
 }
 
 func assert(t *testing.T, msg string, a interface{}, b interface{}) {
-	if fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b) {
+	// TODO: replace with strings.ReplaceAll once we drop support for GO 1.11
+	if strings.Replace(fmt.Sprintf("%v", a), "\r\n", "\n", -1) == strings.Replace(fmt.Sprintf("%v", b), "\r\n", "\n", -1) {
 		return
 	}
 	t.Fatalf("%s: %v != %v", msg, a, b)

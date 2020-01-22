@@ -126,7 +126,7 @@ func TestParseTemplatesGlob(t *testing.T) {
 		},
 	}
 
-	fs, err := NewLocalFS("/", "mock/", "mock/foo.txt:/foo.txt", "mock/foofunc.txt:/foofunc.txt")
+	fs, err := NewLocalFS("/", "mock/foo.txt:/foo.txt", "mock/foofunc.txt:/foofunc.txt")
 	assert(t, "error creating local FS", nil, err)
 	if fs == nil {
 		return

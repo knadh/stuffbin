@@ -1,6 +1,7 @@
 package stuffbin
 
 import (
+	"runtime"
 	"sort"
 	"testing"
 )
@@ -16,13 +17,23 @@ func TestUnStuff(t *testing.T) {
 func TestGetStuff(t *testing.T) {
 	b, err := GetStuff(mockBinStuffed)
 	assert(t, "error getting stuff", nil, err)
-	assert(t, "mismatch in stuff byte size", mockZipSize, len(b))
+	expectedLength := len(b)
+	if runtime.GOOS == "windows" {
+		// reduce length by one to compensate for \r line ending byte on windows
+		expectedLength--
+	}
+	assert(t, "mismatch in stuff byte size", mockZipSize, expectedLength)
 }
 
 func TestUnzipFiles(t *testing.T) {
 	b, err := GetStuff(mockBinStuffed)
 	assert(t, "error getting stuff", nil, err)
-	assert(t, "mismatch in stuff byte size", mockZipSize, len(b))
+	expectedLength := len(b)
+	if runtime.GOOS == "windows" {
+		// reduce length by one to compensate for \r line ending byte on windows
+		expectedLength--
+	}
+	assert(t, "mismatch in stuff byte size", mockZipSize, expectedLength)
 
 	// Unzip the files and check if they're all there including
 	// the alias.

@@ -1,0 +1,101 @@
+name: Test and Build
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: [1.11, 1.12, 1.13]
+    name: ${{ matrix.os }} @ Go ${{ matrix.go }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup Go ${{ matrix.go }}
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Set GOPATH, PATH and ENV
+        run: |
+          echo "::set-env name=GOPATH::$(dirname $GITHUB_WORKSPACE)"
+          echo "::set-env name=GO111MODULE::on"
+          echo "::set-env name=GOPROXY::https://proxy.golang.org"
+          echo "::add-path::$(dirname $GITHUB_WORKSPACE)/bin"
+        shell: bash
+
+      - name: Checkout Code
+        uses: actions/checkout@v1
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Run Tests
+        run: go test ./...
+
+      - name: Extract Version
+        if: success() && contains(github.ref, 'v') && matrix.os == 'ubuntu-latest' && matrix.go == '1.13'
+        id: extract_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
+      - name: Build Binary
+        if: success() && contains(github.ref, 'v') && matrix.os == 'ubuntu-latest' && matrix.go == '1.13'
+        run: |
+          GOOS=linux go build -o stuffbin-linux-amd64-${{ steps.extract_version.outputs.VERSION }}/stuffbin -ldflags "-s -w" stuffbin/main.go
+          tar -czvf stuffbin-linux-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz stuffbin-linux-amd64-${{ steps.extract_version.outputs.VERSION }}
+          GOOS=darwin go build -o stuffbin-macos-amd64-${{ steps.extract_version.outputs.VERSION }}/stuffbin -ldflags "-s -w" stuffbin/main.go
+          tar -czvf stuffbin-macos-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz stuffbin-macos-amd64-${{ steps.extract_version.outputs.VERSION }}
+          GOOS=windows go build -o stuffbin-windows-amd64-${{ steps.extract_version.outputs.VERSION }}/stuffbin.exe -ldflags "-s -w" stuffbin/main.go
+          tar -czvf stuffbin-windows-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz stuffbin-windows-amd64-${{ steps.extract_version.outputs.VERSION }}
+
+      - name: Create Release
+        id: create_release
+        if: success() && contains(github.ref, 'v') && matrix.os == 'ubuntu-latest' && matrix.go == '1.13'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux Asset to Release
+        if: success() && contains(github.ref, 'v') && matrix.os == 'ubuntu-latest' && matrix.go == '1.13'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./stuffbin-linux-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz
+          asset_name: stuffbin-linux-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz
+          asset_content_type: application/tar+gzip
+
+      - name: Upload MacOS Asset to Release
+        if: success() && contains(github.ref, 'v') && matrix.os == 'ubuntu-latest' && matrix.go == '1.13'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./stuffbin-macos-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz
+          asset_name: stuffbin-macos-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz
+          asset_content_type: application/tar+gzip
+
+      - name: Upload Windows Asset to Release
+        if: success() && contains(github.ref, 'v') && matrix.os == 'ubuntu-latest' && matrix.go == '1.13'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./stuffbin-windows-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz
+          asset_name: stuffbin-windows-amd64-${{ steps.extract_version.outputs.VERSION }}.tar.gz
+          asset_content_type: application/tar+gzip
