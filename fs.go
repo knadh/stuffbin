@@ -206,8 +206,8 @@ func (f *File) ReadBytes() []byte {
 // Close emulates http.File's Close but internally,
 // it simply seeks the File's reader to 0.
 func (f *File) Close() error {
-	f.Seek(0, 0)
-	return nil
+	_, err := f.Seek(0, 0)
+	return err
 }
 
 // Read reads the file contents.
@@ -271,6 +271,11 @@ func ParseTemplates(f template.FuncMap, fs FileSystem, path ...string) (*templat
 	if f != nil {
 		tpl = tpl.Funcs(f)
 	}
+
+	if len(path) == 0 {
+		return nil, fmt.Errorf("no files named in call to ParseTemplates")
+	}
+
 	for _, p := range path {
 		f, err := fs.Read(p)
 		if err != nil {

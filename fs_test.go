@@ -80,26 +80,29 @@ func TestGlob(t *testing.T) {
 		return
 	}
 
-	g, _ := fs.Glob("/foo.txt")
+	g, err := fs.Glob("/foo.txt")
+	assert(t, "glob creation failed", nil, err)
 	assert(t, "glob match failed", []string{"/foo.txt"}, g)
 
-	g, _ = fs.Glob("/mock/*.exe")
+	g, err = fs.Glob("/mock/*.exe")
+	assert(t, "glob creation failed", nil, err)
 	assert(t, "glob match failed", []string{"/mock/mock.exe"}, g)
 }
 
 func TestParseTemplates(t *testing.T) {
-	fs, err := NewLocalFS("/", "mock/", "mock/foo.txt:/foo.txt", "mock/foofunc.txt:/foofunc.txt")
+	fs, err := NewLocalFS("/", "mock/", "mock/bar.txt:/bar.txt", "mock/foo.txt:/foo.txt", "mock/foofunc.txt:/foofunc.txt")
 	assert(t, "error creating local FS", nil, err)
 	if fs == nil {
 		return
 	}
 
-	tpl, err := ParseTemplates(nil, fs, "/foo.txt")
+	tpl, err := ParseTemplates(nil, fs, "/bar.txt")
 	assert(t, "error parsing template", nil, err)
 
 	b := bytes.Buffer{}
-	tpl.Execute(&b, nil)
-	assert(t, "mismatch in executed template", "foo", string(b.Bytes()))
+	err = tpl.Execute(&b, nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "bar", b.String())
 
 	// Template func map.
 	mp := map[string]interface{}{
@@ -107,11 +110,12 @@ func TestParseTemplates(t *testing.T) {
 			return "func"
 		},
 	}
-	tpl, err = ParseTemplates(mp, fs, "/foofunc.txt")
+	tpl, err = ParseTemplates(mp, fs, "/foo.txt", "/foofunc.txt")
 	assert(t, "error parsing template", nil, err)
 	b.Reset()
-	tpl.Execute(&b, nil)
-	assert(t, "mismatch in executed template", "foo - func", string(b.Bytes()))
+	err = tpl.Execute(&b, nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "foo\nfoo - func\n", b.String())
 }
 
 func TestParseTemplatesGlob(t *testing.T) {
@@ -132,6 +136,7 @@ func TestParseTemplatesGlob(t *testing.T) {
 	assert(t, "error parsing template", nil, err)
 
 	b := bytes.Buffer{}
-	tpl.Execute(&b, nil)
-	assert(t, "mismatch in executed template", "foo - func", string(b.Bytes()))
+	err = tpl.Execute(&b, nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "foo\nfoo - func\n", b.String())
 }
