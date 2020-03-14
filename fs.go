@@ -23,6 +23,8 @@ type FileSystem interface {
 	Glob(pattern string) ([]string, error)
 	Read(path string) ([]byte, error)
 	Open(path string) (http.File, error)
+	Delete(path string) error
+	Merge(f FileSystem) error
 	FileServer() http.Handler
 }
 
@@ -65,7 +67,6 @@ func NewFS() (FileSystem, error) {
 // with the given list of local files and directories mapped to it.
 func NewLocalFS(rootPath string, paths ...string) (FileSystem, error) {
 	fs, _ := NewFS()
-
 	if err := walkPaths(func(srcPath, targetPath string, fInfo os.FileInfo) error {
 		f, err := os.Open(srcPath)
 		if err != nil {
@@ -173,6 +174,22 @@ func (fs *memFS) Open(path string) (http.File, error) {
 	return fs.Get(path)
 }
 
+// Delete deletes the given path.
+func (fs *memFS) Delete(fPath string) error {
+	fPath = cleanPath("/", fPath)
+	_, ok := fs.files[fPath]
+	if !ok {
+		return os.ErrNotExist
+	}
+	delete(fs.files, fPath)
+	return nil
+}
+
+// Merge merges a given source FileSystem into this instance.
+func (fs *memFS) Merge(src FileSystem) error {
+	return MergeFS(fs, src)
+}
+
 // FileServer returns an http.Handler that serves the files from
 // the file system like http.FileServer.
 func (fs *memFS) FileServer() http.Handler {
@@ -217,7 +234,6 @@ func (f *File) Read(b []byte) (int, error) {
 
 // Readdir is a dud.
 func (f *File) Readdir(count int) ([]os.FileInfo, error) {
-	fmt.Println("read dir here!")
 	return nil, ErrNotSupported
 }
 
@@ -260,7 +276,6 @@ func ParseTemplatesGlob(f template.FuncMap, fs FileSystem, pattern string) (*tem
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("pattern %s matches no files", pattern)
 	}
-
 	return ParseTemplates(f, fs, paths...)
 }
 
@@ -289,4 +304,26 @@ func ParseTemplates(f template.FuncMap, fs FileSystem, path ...string) (*templat
 	}
 
 	return tpl, nil
+}
+
+// MergeFS merges FileSystem b into a, overwriting conflicting paths.
+func MergeFS(dest FileSystem, src FileSystem) error {
+	for _, path := range src.List() {
+		// Get from target.
+		f, err := src.Get(path)
+		if err != nil {
+			return err
+		}
+
+		// Check if the path exists in the target. If yes, remove.
+		if err, _ := dest.Get(path); err != nil {
+			if err := dest.Delete(path); err != nil {
+				return err
+			}
+		}
+
+		// Add to destination.
+		dest.Add(f)
+	}
+	return nil
 }

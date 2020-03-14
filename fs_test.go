@@ -140,3 +140,38 @@ func TestParseTemplatesGlob(t *testing.T) {
 	assert(t, "template execute failed", nil, err)
 	assert(t, "mismatch in executed template", "foo\nfoo - func\n", b.String())
 }
+
+func TestMerge(t *testing.T) {
+	fs, err := NewLocalFS("/", "mock/", "mock/foo.txt:/foo.txt")
+	assert(t, "error creating local FS", nil, err)
+
+	fs2, err := NewLocalFS("/", "mock/bar.txt:/bar.txt", "mock/foofunc.txt:/foofunc.txt")
+	assert(t, "error creating local FS", nil, err)
+
+	err = fs.Merge(fs2)
+	assert(t, "error merging FS", nil, err)
+
+	_, err = fs.Get("/bar.txt")
+	assert(t, "merged file not found", nil, err)
+	_, err = fs.Get("/foofunc.txt")
+	assert(t, "merged file not found", nil, err)
+}
+
+func TestMergeOverwrite(t *testing.T) {
+	fs, err := NewLocalFS("/", "mock/", "mock/foo.txt:/foo.txt")
+	assert(t, "error creating local FS", nil, err)
+
+	// Load baz.txt as foo.txt
+	fs2, err := NewLocalFS("/", "mock/subdir/baz.txt:/foo.txt")
+	assert(t, "error creating local FS", nil, err)
+
+	err = fs.Merge(fs2)
+	assert(t, "error merging FS", nil, err)
+
+	_, err = fs.Get("/foo.txt")
+	assert(t, "merged file not found", nil, err)
+
+	// "foo" should've been written with "baz" after the merge.
+	b, err := fs.Get("/foo.txt")
+	assert(t, "merged value doesn't match", "baz\n", string(b.ReadBytes()))
+}
