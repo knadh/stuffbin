@@ -6,9 +6,17 @@ stuffbin is a utility + package to compress and embed static files and assets in
 
 ![stuffbin](https://user-images.githubusercontent.com/547147/50650557-caa04680-0fa6-11e9-9f8e-4d76cf331dc6.png)
 
+## stuffbin vs. Go 1.6 embed
+Go 1.6 introduced the [`//go:embed`](https://golang.org/pkg/embed/) directive that allows embedding of files into Go binaries without any external utilities. stuffbin offers a few key advantages over native embedding in its current form.
+
+- All files are ZIP compressed.
+- Custom path aliases (eg: embed `/home/local/path/file.txt` as `/app/file.txt`).
+- Dynamically embed files instead of static `//go:embed` directives.
+- Better [filesystem abstraction](https://github.com/knadh/stuffbin/blob/e80f23deca3fbc201ae7fb5f59a9e4ea6f17878e/fs.go#L17) for virtual filesystem manipulation, including merging.
+
 ## How does it work?
 
-stuffbin compresses and embeds arbitrary files to the end of Go binaries. This does not affect the normal execution of the binary by the operating system as it is aware of its original size. The compressed data that is appended beyond its original size is simply ignored. When a stuffed application is executed, stuffbin reads the compressed bytes from self (the executable), uncompresses the files on the fly into an in-memory filesystem and provides a simple FileSystem interface to access them. This enables complex Go applications that have external file dependencies to be shipped a single _fat_ binary, commonly, web applications that have static file and template dependencies.
+stuffbin compresses and embeds arbitrary files to the end of Go binaries. This does not affect the normal execution of the binary as the compressed data that is appended beyond the binary's original size is simply ignored by the operating system. When a stuffed application is executed, stuffbin reads the compressed bytes from self (the executable), uncompresses the files on the fly into an in-memory filesystem, and provides a FileSystem interface to access them. This enables Go applications that have external file dependencies to be shipped a single _fat_ binary, commonly, web applications that have static file and template dependencies.
 
 - Built in ZIP compression
 - A virtual filesystem abstraction to access embedded files
