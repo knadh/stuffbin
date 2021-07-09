@@ -10,6 +10,7 @@ Go 1.16 introduced the [`//go:embed`](https://golang.org/pkg/embed/) directive t
 - All files are ZIP compressed.
 - Custom path aliases (eg: embed `/home/local/path/file.txt` as `/app/file.txt`).
 - Dynamically embed files instead of static `//go:embed` directives.
+- Go embed does not permit embedding of files in parent directories or files outside of the current module. This makes it difficult for programs structured in a `cmd` directory to embed files outside it, for example.
 - Better [filesystem abstraction](https://github.com/knadh/stuffbin/blob/e80f23deca3fbc201ae7fb5f59a9e4ea6f17878e/fs.go#L17) for virtual filesystem manipulation, including merging.
 
 ## How does it work?
