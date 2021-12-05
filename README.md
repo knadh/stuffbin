@@ -2,7 +2,7 @@
 
 # stuffbin
 
-stuffbin is a utility + package to compress and embed static files and assets into Go binaries for distribution. It supports falling back to the local file system when no embedded assets are available, for instance, in development mode. stuffbin is inspired by [zgok](https://github.com/srtkkou/zgok) but is much cleaner and leaner.
+stuffbin is a utility + package to compress and embed static files and assets into Go binaries for distribution. It supports falling back to the local file system when no embedded assets are available, for instance, in development mode. stuffbin is inspired by [zgok](https://github.com/srtkkou/zgok) but is simpler and has better abstractions.
 
 ## stuffbin vs. Go 1.16 embed
 Go 1.16 introduced the [`//go:embed`](https://golang.org/pkg/embed/) directive that allows embedding of files into Go binaries without any external utilities. stuffbin offers a few key advantages over native embedding in its current form.
@@ -10,7 +10,8 @@ Go 1.16 introduced the [`//go:embed`](https://golang.org/pkg/embed/) directive t
 - All files are ZIP compressed.
 - Custom path aliases (eg: embed `/home/local/path/file.txt` as `/app/file.txt`).
 - Dynamically embed files instead of static `//go:embed` directives.
-- Go embed does not permit embedding of files in parent directories or files outside of the current module. This makes it difficult for programs structured in a `cmd` directory to embed files outside it, for example.
+- Embed parent directories, sub-directories, and arbitrary paths (eg: `../../path`).
+  Go embed does not permit embedding of files outside of a .go file's directory. This makes it difficult for programs structured in a `cmd` directory to embed files outside it.
 - Better [filesystem abstraction](https://github.com/knadh/stuffbin/blob/e80f23deca3fbc201ae7fb5f59a9e4ea6f17878e/fs.go#L17) for virtual filesystem manipulation, including merging.
 
 ## How does it work?
