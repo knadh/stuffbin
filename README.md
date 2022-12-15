@@ -35,6 +35,14 @@ stuffbin compresses and embeds arbitrary files to the end of Go binaries. This d
 go get -u github.com/knadh/stuffbin/...
 ```
 
+### Homebrew
+
+For macOS/Linux users, you can install via [brew](https://brew.sh/)
+
+```sh
+$ brew install stuffbin
+```
+
 ## Usage
 
 #### Stuffing and embedding
