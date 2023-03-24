@@ -19,8 +19,7 @@ The file paths to embed can be suffixed by a colon and an
 target (alias) path, for instance /original/local/path:/virtual/path.
 When compressed and stuffed, the original path is overwritten
 with the alias, which in turn can be used to access the file
-from within the application.
-`
+from within the application.`
 
 var (
 	aID      = "id"
