@@ -148,7 +148,7 @@ func TestExecuteTemplate(t *testing.T) {
 		return
 	}
 
-	tpl, err := ParseTemplates(nil, fs, "/foo.txt", "/bar.txt", "/subdir/baz.txt")
+	tpl, err := ParseTemplates(nil, fs, "/foo.txt", "/subdir/baz.txt", "/bar.txt")
 	assert(t, "error parsing template", nil, err)
 
 	b := bytes.Buffer{}
@@ -175,6 +175,11 @@ func TestExecuteTemplateGlob(t *testing.T) {
 	assert(t, "error parsing template", nil, err)
 
 	b := bytes.Buffer{}
+	err = tpl.ExecuteTemplate(&b, "foo.txt", nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "foo\nfoo - func\n", b.String())
+
+	b.Reset()
 	err = tpl.ExecuteTemplate(&b, "bar.txt", nil)
 	assert(t, "template execute failed", nil, err)
 	assert(t, "mismatch in executed template", "bar", b.String())
@@ -196,7 +201,6 @@ func TestNamedTemplates(t *testing.T) {
 	}
 	sort.Strings(names)
 
-	assert(t, "template execute failed", nil, err)
 	assert(t, "mismatch in executed template", []string{"", "bar.txt", "foo.txt"}, names)
 }
 
