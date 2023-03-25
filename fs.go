@@ -297,6 +297,7 @@ func ParseTemplates(f template.FuncMap, fs FileSystem, path ...string) (*templat
 			return nil, fmt.Errorf("%s: %v", p, err)
 		}
 
+		// Template's name will be the full path without leading "/"
 		rel, err := filepath.Rel("/", p)
 		if err != nil {
 			return nil, err
