@@ -180,6 +180,26 @@ func TestExecuteTemplateGlob(t *testing.T) {
 	assert(t, "mismatch in executed template", "bar", b.String())
 }
 
+func TestNamedTemplates(t *testing.T) {
+	fs, err := NewLocalFS("/", "mock/", "mock/bar.txt:/bar.txt", "mock/foo.txt:/foo.txt")
+	assert(t, "error creating local FS", nil, err)
+	if fs == nil {
+		return
+	}
+
+	tpl, err := ParseTemplatesGlob(nil, fs, "/*.txt")
+	assert(t, "error parsing template", nil, err)
+
+	names := make([]string, len(tpl.Templates()))
+	for i, template := range tpl.Templates() {
+		names[i] = template.Name()
+	}
+	sort.Strings(names)
+
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", []string{"", "bar.txt", "foo.txt"}, names)
+}
+
 func TestMerge(t *testing.T) {
 	fs, err := NewLocalFS("/", "mock/", "mock/foo.txt:/foo.txt")
 	assert(t, "error creating local FS", nil, err)
