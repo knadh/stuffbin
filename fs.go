@@ -282,7 +282,7 @@ func ParseTemplatesGlob(f template.FuncMap, fs FileSystem, pattern string) (*tem
 // ParseTemplates takes a file system, a list of file paths,
 // and parses them into a template.Template.
 func ParseTemplates(f template.FuncMap, fs FileSystem, path ...string) (*template.Template, error) {
-	tpl := template.New("_all")
+	tpl := template.New("")
 	if f != nil {
 		tpl = tpl.Funcs(f)
 	}
@@ -297,7 +297,19 @@ func ParseTemplates(f template.FuncMap, fs FileSystem, path ...string) (*templat
 			return nil, fmt.Errorf("%s: %v", p, err)
 		}
 
-		_, err = tpl.New(filepath.Base(p)).Parse(string(f))
+		rel, err := filepath.Rel("/", p)
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse into named template
+		_, err = tpl.New(rel).Parse(string(f))
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse (append) into root template for BC
+		_, err = tpl.Parse(string(f))
 		if err != nil {
 			return nil, err
 		}
