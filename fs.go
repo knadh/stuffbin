@@ -308,7 +308,7 @@ func ParseTemplates(f template.FuncMap, fs FileSystem, path ...string) (*templat
 			return nil, err
 		}
 
-		// Parse (append) into root template for BC
+		// Parse into root template for BC
 		_, err = tpl.Parse(string(f))
 		if err != nil {
 			return nil, err
