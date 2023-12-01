@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"sort"
 	"testing"
 )
@@ -112,5 +113,7 @@ func assert(t *testing.T, msg string, a interface{}, b interface{}) {
 	if fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b) {
 		return
 	}
-	t.Fatalf("%s: %v != %v", msg, a, b)
+
+	_, file, line, _ := runtime.Caller(1)
+	t.Fatalf("%s:%d: %s: %v != %v", file, line, msg, a, b)
 }
