@@ -32,7 +32,7 @@ stuffbin compresses and embeds arbitrary files to the end of Go binaries. This d
 ## Installation
 
 ```shell
-go get -u github.com/knadh/stuffbin/...
+go install github.com/knadh/stuffbin/...
 ```
 
 ### Homebrew

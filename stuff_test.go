@@ -13,6 +13,7 @@ import (
 const mockBin = "mock/mock.exe"
 const mockBinStuffed = "mock/mock.exe.stuffed"
 const mockBinStuffed2 = "mock/mock.exe.stuffed.temp"
+const mockBinReStuffed = "mock/mock.exe.restuffed"
 const mockExeSize = 512
 const mockZipSize = 338
 
@@ -43,11 +44,25 @@ func TestMakeIDBytes(t *testing.T) {
 }
 
 func TestStuff(t *testing.T) {
-	exeSize, zipSize, err := Stuff(mockBin, mockBinStuffed2, "/", localFiles...)
+	exeSize, zipSize, err := Stuff(mockBin, mockBinReStuffed, "/", localFiles...)
 	assert(t, "error stuffing", nil, err)
 	assert(t, "exe size", mockExeSize, exeSize)
 	assert(t, "zip size", mockZipSize, zipSize)
-	_ = os.Remove(mockBinStuffed2)
+
+	s, err := os.Stat(mockBinReStuffed)
+	assert(t, "error stuffing", nil, err)
+	assert(t, fmt.Sprintf("stuffed bin size doesn't match: exe %d + %d zip + %d id = %d", exeSize, zipSize, lenID, s.Size()), s.Size(), exeSize+zipSize+lenID)
+
+	// Stuff it again. It should have the same size.
+	exeSize2, zipSize2, err2 := Stuff(mockBinReStuffed, mockBinReStuffed, "/", "mock/bar.txt")
+	assert(t, "error stuffing", nil, err2)
+	assert(t, "exe size", exeSize2, exeSize)
+
+	s, err = os.Stat(mockBinReStuffed)
+	assert(t, "error stuffing", nil, err)
+	assert(t, fmt.Sprintf("stuffed bin size doesn't match: exe %d + %d zip + %d id = %d", exeSize2, zipSize2, lenID, s.Size()), s.Size(), exeSize2+zipSize2+lenID)
+
+	_ = os.Remove(mockBinReStuffed)
 }
 
 func TestStuffCustomRoot(t *testing.T) {

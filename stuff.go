@@ -182,6 +182,7 @@ func copyFile(in string, out string) (*os.File, int64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+	curSize := s.Size()
 
 	to, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
@@ -193,7 +194,23 @@ func copyFile(in string, out string) (*os.File, int64, error) {
 		return nil, 0, err
 	}
 
-	return to, s.Size(), nil
+	// Check if the binary is already stuffed. If yes, seek to the original
+	// size of the bin so that the stuffed blob gets overwritten with the
+	// new blob on write.
+	old, _ := GetFileID(in)
+	if old.BinSize > 0 {
+		curSize = int64(old.BinSize)
+
+		// Truncate the file to its original binary size.
+		if err := to.Truncate(curSize); err != nil {
+			return nil, 0, err
+		}
+		if _, err := to.Seek(curSize, 0); err != nil {
+			return nil, 0, err
+		}
+	}
+
+	return to, curSize, nil
 }
 
 func walkPaths(cb WalkFunc, rootPath string, paths ...string) error {
