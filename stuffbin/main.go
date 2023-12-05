@@ -25,6 +25,7 @@ var (
 	aID      = "id"
 	aStuff   = "stuff"
 	aUnstuff = "unstuff"
+	aStrip   = "strip"
 
 	logger = log.New(os.Stdout, "", 0)
 )
@@ -103,9 +104,50 @@ func unstuff(in, out string, l *log.Logger) error {
 	return nil
 }
 
+// strip strips the binary of stuffed files.
+func strip(in, out string, l *log.Logger) error {
+	id, err := stuffbin.GetFileID(in)
+	if err != nil {
+		if err == stuffbin.ErrNoID {
+			return fmt.Errorf("%s: %v", in, err)
+		}
+		return fmt.Errorf("error reading file: %v", err)
+	}
+
+	l.Printf("%s: %s (%v bytes original binary, %v bytes zipped stuff)\n\n", in, id.Name, id.BinSize, id.ZipSize)
+
+	from, err := os.Open(in)
+	if err != nil {
+		return err
+	}
+	defer from.Close()
+
+	// Write out.
+	to, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE, 0755)
+	if err != nil {
+		return err
+	}
+	defer to.Close()
+
+	_, err = io.Copy(to, from)
+	if err != nil {
+		to.Close()
+		return err
+	}
+
+	// Truncate the file to its original length, losing the stuffed zip.
+	if err := to.Truncate(int64(id.BinSize)); err != nil {
+		l.Fatalf("error stripping binary: %v", err)
+	}
+
+	l.Printf("wrote stripped binary '%s'", out)
+
+	return to.Sync()
+}
+
 func main() {
 	var (
-		fAction = flag.String("a", "", fmt.Sprintf("action (%s, %s, %s)", aID, aStuff, aUnstuff))
+		fAction = flag.String("a", "", fmt.Sprintf("action (%s, %s, %s, %s)", aID, aStuff, aUnstuff, aStrip))
 		fIn     = flag.String("in", "", "path to the input binary")
 		fRoot   = flag.String("root", "/", "(optional) root path to bind all files to")
 		fOut    = flag.String("out", "", "path to the output binary (stuff) or zip file (unstuff)")
@@ -125,7 +167,7 @@ func main() {
 	}
 
 	// Validate actions.
-	if *fAction != aID && *fAction != aStuff && *fAction != aUnstuff {
+	if *fAction != aID && *fAction != aStuff && *fAction != aUnstuff && *fAction != aStrip {
 		logger.Fatal("unknown action")
 	}
 
@@ -150,6 +192,14 @@ func main() {
 	// Unstuff bundled files.
 	if *fAction == aUnstuff {
 		if err := unstuff(*fIn, *fOut, logger); err != nil {
+			logger.Fatal(err)
+		}
+		return
+	}
+
+	// Strip binary of zip files.
+	if *fAction == aStrip {
+		if err := strip(*fIn, *fOut, logger); err != nil {
 			logger.Fatal(err)
 		}
 		return
