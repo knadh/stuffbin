@@ -4,6 +4,8 @@
 
 stuffbin is a utility + package to compress and embed static files and assets into Go binaries for distribution. It supports falling back to the local file system when no embedded assets are available, for instance, in development mode. stuffbin is inspired by [zgok](https://github.com/srtkkou/zgok) but is simpler and has better abstractions.
 
+**Update (June 2026):** stuffbin seems to be feature complete with no changes required in ~3 years. It is actively used in critical production systems.
+
 ## stuffbin vs. Go 1.16 embed
 Go 1.16 introduced the [`//go:embed`](https://golang.org/pkg/embed/) directive that allows embedding of files into Go binaries without any external utilities. stuffbin offers a few key advantages over native embedding in its current form.
 
