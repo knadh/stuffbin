@@ -141,6 +141,69 @@ func TestParseTemplatesGlob(t *testing.T) {
 	assert(t, "mismatch in executed template", "foo\nfoo - func\n", b.String())
 }
 
+func TestExecuteTemplate(t *testing.T) {
+	fs, err := NewLocalFS("/", "mock/:/")
+	assert(t, "error creating local FS", nil, err)
+	if fs == nil {
+		return
+	}
+
+	tpl, err := ParseTemplates(nil, fs, "/foo.txt", "/subdir/baz.txt", "/bar.txt")
+	assert(t, "error parsing template", nil, err)
+
+	b := bytes.Buffer{}
+	err = tpl.ExecuteTemplate(&b, "subdir/baz.txt", nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "baz\n", b.String())
+}
+
+func TestExecuteTemplateGlob(t *testing.T) {
+	// Template func map.
+	mp := map[string]interface{}{
+		"Foo": func() string {
+			return "func"
+		},
+	}
+
+	fs, err := NewLocalFS("/", "mock/:/")
+	assert(t, "error creating local FS", nil, err)
+	if fs == nil {
+		return
+	}
+
+	tpl, err := ParseTemplatesGlob(mp, fs, "/*.txt")
+	assert(t, "error parsing template", nil, err)
+
+	b := bytes.Buffer{}
+	err = tpl.ExecuteTemplate(&b, "foo.txt", nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "foo\nfoo - func\n", b.String())
+
+	b.Reset()
+	err = tpl.ExecuteTemplate(&b, "bar.txt", nil)
+	assert(t, "template execute failed", nil, err)
+	assert(t, "mismatch in executed template", "bar", b.String())
+}
+
+func TestNamedTemplates(t *testing.T) {
+	fs, err := NewLocalFS("/", "mock/", "mock/bar.txt:/bar.txt", "mock/foo.txt:/foo.txt")
+	assert(t, "error creating local FS", nil, err)
+	if fs == nil {
+		return
+	}
+
+	tpl, err := ParseTemplatesGlob(nil, fs, "/*.txt")
+	assert(t, "error parsing template", nil, err)
+
+	names := make([]string, len(tpl.Templates()))
+	for i, template := range tpl.Templates() {
+		names[i] = template.Name()
+	}
+	sort.Strings(names)
+
+	assert(t, "mismatch in executed template", []string{"", "bar.txt", "foo.txt"}, names)
+}
+
 func TestMerge(t *testing.T) {
 	fs, err := NewLocalFS("/", "mock/", "mock/foo.txt:/foo.txt")
 	assert(t, "error creating local FS", nil, err)
