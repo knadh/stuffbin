@@ -15,13 +15,13 @@ const mockBinStuffed = "mock/mock.exe.stuffed"
 const mockBinStuffed2 = "mock/mock.exe.stuffed.temp"
 const mockBinReStuffed = "mock/mock.exe.restuffed"
 const mockExeSize = 512
-const mockZipSize = 338
 
-var mockID = ID{
-	Name:    [8]byte{'s', 't', 'u', 'f', 'f', 'b', 'i', 'n'},
-	BinSize: mockExeSize,
-	ZipSize: mockZipSize,
-}
+// The DEFLATE output and ZIP size changed in Go 1.27. Instead of hardcoding,
+// make the expsected values dynamic in the setup.
+var (
+	mockZipSize int
+	mockID      ID
+)
 
 var (
 	localFiles   = []string{"mock/bar.txt", "mock/foo.txt"}
@@ -36,7 +36,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestMakeIDBytes(t *testing.T) {
-	b := makeIDBytes(mockID)
+	b := makeIDBytes(ID{
+		Name:    [8]byte{'s', 't', 'u', 'f', 'f', 'b', 'i', 'n'},
+		BinSize: mockExeSize,
+		ZipSize: 338,
+	})
 
 	assert(t, "makeID returned unexpected bytes",
 		[]byte{115, 116, 117, 102, 102, 98, 105, 110, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 82},
@@ -111,6 +115,18 @@ func setup() {
 	err := ioutil.WriteFile(mockBin, b, 0755)
 	if err != nil {
 		panic(err)
+	}
+
+	z, err := zipFiles("/", localFiles...)
+	if err != nil {
+		panic(fmt.Sprintf("error zipping: %v", err))
+	}
+
+	mockZipSize = z.Len()
+	mockID = ID{
+		Name:    [8]byte{'s', 't', 'u', 'f', 'f', 'b', 'i', 'n'},
+		BinSize: mockExeSize,
+		ZipSize: uint64(mockZipSize),
 	}
 
 	if _, _, err := Stuff(mockBin, mockBinStuffed, "/", localFiles...); err != nil {
